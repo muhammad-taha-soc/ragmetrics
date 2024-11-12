@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAGmetrics</title>
+    <style>
+        :root {
+            --primary-blue: #1B4965;
+            --header-bg: #1B4965;
+            --row-alt: #E6EEF2;
+            --border-color: #ccc;
+            --progress-bg: #f0f0f0;
+            --button-hover: #15384d;
+            --active-tab-bg: #E6EEF2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 200px;
+            padding: 20px;
+            border-right: 1px solid var(--border-color);
+            background: white;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 200px;
+            flex: 1;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-list li {
+            margin-bottom: 12px;
+        }
+
+        .nav-list a {
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .nav-list a.active {
+            background-color: var(--active-tab-bg);
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .page-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .button-group {
+            margin-bottom: 20px;
+        }
+
+        .button-group .button {
+            margin-right: 10px;
+        }
+
+        .progress-container {
+            background: var(--progress-bg);
+            border-radius: 4px;
+            margin: 20px 0;
+            height: 24px;
+        }
+
+        .progress-bar {
+            background: var(--primary-blue);
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            color: white;
+            text-align: center;
+            line-height: 24px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: var(--row-alt);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            margin-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background-color: var(--header-bg);
+            color: white;
+            text-align: left;
+            padding: 12px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--row-alt);
+        }
+
+        .add-dataset-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Ensure it appears above everything */
+    transition: opacity 0.3s ease; /* Smooth fade-in/out */
+}
+
+.modal-content {
+    background: #fff; /* White background for contrast */
+    padding: 30px;
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    max-width: 500px;
+    width: 90%; /* Responsive width */
+    position: relative;
+    animation: modalFadeIn 0.3s ease-out; /* Smooth entry animation */
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    color: var(--primary-blue); /* Consistent branding */
+    text-align: center;
+}
+
+.modal-content label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #555; /* Neutral text color */
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.modal-content input:focus {
+    border-color: var(--primary-blue); /* Highlighted border on focus */
+}
+
+.modal-content .button {
+    margin: 10px 5px 0;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.modal-content .button:hover {
+    background-color: var(--button-hover); /* Button hover state */
+}
+
+.modal-content .button:nth-child(1) {
+    background: #f0f0f0; /* Neutral background for cancel button */
+    color: #555; /* Neutral text color */
+    border: 1px solid var(--border-color); /* Subtle border */
+}
+
+.modal-content .button:nth-child(2) {
+    background: var(--primary-blue); /* Primary action color */
+    color: white;
+    border: none;
+}
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">RAGmetrics</div>
+        <ul class="nav-list">
+            <li><a href="#quick-start">Quick Start</a></li>
+            <li><a href="#keys"  id="keys-tab">Keys</a></li>
+            <li><a href="#datasets" id="datasets-tab" class="active">Datasets</a></li>
+            <li><a href="#metrics">Metrics</a></li>
+            <li><a href="#evaluations">Evaluations</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+
+        
+<!-- Keys Page -->
+<div id="keys-page" class="page">
+    <h1 class="page-title">Keys</h1>
+    <div class="keys-container">
+        <table id="keys-table" class="datatable">
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Provider</th>
+                    <th>Key / Endpoint</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Anthropic Key #1</td>
+                    <td><span class="icon">[Icon]</span> Anthropic</td>
+                    <td>sk-an*****UvqAA</td>
+                </tr>
+                <!-- Additional rows can go here -->
+            </tbody>
+        </table>
+    </div>
+    <button class="button add-dataset-btn" onclick="openKeyModal()">Add Key</button>
+</div>
+
+<!-- Modal for Adding or Editing Keys -->
+<div id="key-modal" class="modal">
+    <div class="modal-content">
+        <h2 id="key-modal-title">Add Key</h2>
+        <form id="key-form">
+            <label for="key-name">Key Name</label>
+            <input type="text" id="key-name" placeholder="Enter key name" required>
+            <label for="key-provider">Provider</label>
+            <input type="text" id="key-provider" placeholder="Enter provider name" required>
+            <label for="key-value">Key / Endpoint</label>
+            <input type="text" id="key-value" placeholder="Enter key or endpoint" required>
+            <div style="text-align: right; margin-top: 10px;">
+                <button type="button" class="button" onclick="closeKeyModal()">Cancel</button>
+                <button type="submit" class="button">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+        <!-- Data Generation Page -->
+        <div id="generation-page" class="page">
+            <h1 class="page-title">Dataset: DSP Database</h1>
+            <div class="info-box">
+                <h2>Generating Synthetic Data: Talk to My Data</h2>
+                <p>Type of Database: DSP in Advertising</p>
+                <p>Type of User: Analyst working for an ad agency</p>
+                <p>Questions: 10</p>
+                <p>Generator Model: GPT 4o Mini</p>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" style="width: 20%">20% complete</div>
+            </div>
+            <p>Step 2 of 25: Generating XL tables.</p>
+            <p>ETA: 4-7 minutes</p>
+            <div class="button-group">
+                <button class="button" onclick="showPage('datasets-page')">&lt; Back to Datasets</button>
+                <button class="button">Cancel Generation</button>
+                <button class="button" onclick="showPage('schema-page')">Next</button>
+            </div>
+        </div>
+
+        <!-- Datasets Page -->
+        <div id="datasets-page" class="page active">
+            <h1 class="page-title">Datasets</h1>
+            <table id="datasets-table">
+                <thead>
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Type</th>
+                        <th>Rows</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Gsm8k</td>
+                        <td>Documents</td>
+                        <td>30</td>
+                        <td>From spreadsheet: MyFileName.csv</td>
+                    </tr>
+                    <tr>
+                        <td>DSP Database</td>
+                        <td>Data</td>
+                        <td>10</td>
+                        <td>From Wikipedia</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="button add-dataset-btn" onclick="openDatasetModal()">Add Dataset</button>
+        </div>
+
+        <!-- Dataset View Page -->
+        <div id="dataset-view" class="page">
+            <h1 class="page-title">Dataset: DSP Database</h1>
+            <div class="button-group">
+                <button class="button" onclick="showPage('datasets-page')">Show Database</button>
+                <button class="button">Edit Mode</button>
+                <button class="button">Select SQL</button>
+                <button class="button">Run</button>
+                <button class="button" onclick="showPage('generation-page')">Delete</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Q#</th>
+                        <th>Question</th>
+                        <th>Expected SQL</th>
+                        <th>Expected Data</th>
+                        <th>Ground Truth Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Example Text</td>
+                        <td>SQL Query</td>
+                        <td>Expected Data</td>
+                        <td>Actual Answer</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Schema Page -->
+        <!-- <div id="schema-page" class="page">
+            <h1 class="page-title">Dataset: DSP Database Schema</h1>
+            <div class="button-group">
+                <button class="button" onclick="showPage('dataset-view')">&lt; Show Labeled Data</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Table</th>
+                        <th>Primary Key</th>
+                        <th>Rows</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Users</td>
+                        <td>UserID</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>Ad Campaigns</td>
+                        <td>CampaignID</td>
+                        <td>5</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div> -->
+        <!-- Schema Page -->
+        <div id="schema-page" class="page">
+            <h1 class="page-title">Dataset: DSP Database Schema</h1>
+            <div class="button-group">
+                <button class="button" onclick="showPage('dataset-view')">&lt; Show Labeled Data</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Table</th>
+                        <th>Primary Key</th>
+                        <th>Rows</th>
+                    </tr>
+                </thead>
+                <tbody id="schema-table-body">
+                    <tr class="schema-row">
+                        <td>Users</td>
+                        <td>UserID</td>
+                        <td>2</td>
+                    </tr>
+                    <tr class="schema-row">
+                        <td>Ad Campaigns</td>
+                        <td>CampaignID</td>
+                        <td>5</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Modal for Adding Data to Schema -->
+        <div id="schema-modal" class="modal">
+            <div class="modal-content">
+                <h2>Add Data to Schema</h2>
+                <form id="schema-form">
+                    <label for="schema-name">Table Name</label>
+                    <input type="text" id="schema-name" placeholder="Enter table name" required>
+                    <label for="primary-key">Primary Key</label>
+                    <input type="text" id="primary-key" placeholder="Enter primary key" required>
+                    <label for="rows">Rows</label>
+                    <input type="number" id="rows" placeholder="Enter number of rows" required>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button type="button" class="button" onclick="closeSchemaModal()">Cancel</button>
+                        <button type="submit" class="button">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+
+        <!-- Modal for Adding Dataset -->
+        <div id="dataset-modal" class="modal">
+            <div class="modal-content">
+                <h2>Add Dataset</h2>
+                <form id="dataset-form">
+                    <label for="dataset-name">Dataset Name</label>
+                    <input type="text" id="dataset-name" placeholder="Enter dataset name" required>
+                   <br/>
+                    <label for="dataset-type">Type</label>
+                    <input type="text" id="dataset-type" placeholder="Enter dataset type" required>
+                    <br />
+                    <label for="dataset-rows">Rows</label>
+                    <input type="number" id="dataset-rows" placeholder="Enter number of rows" required>
+                    <br/>
+                    <label for="dataset-source">Source</label>
+                    <input type="text" id="dataset-source" placeholder="Enter dataset source" required>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button type="button" class="button" onclick="closeDatasetModal()">Cancel</button>
+                        <button type="submit" class="button" onclick="showPage('generation-page')">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+<!-- <script>
+    function showPage(pageId) {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+
+        // Show the requested page
+        const page = document.getElementById(pageId);
+        if (page) {
+            page.classList.add('active');
+        } else {
+            console.error(`Page with ID "${pageId}" not found.`);
+        }
+
+        // Update the sidebar to highlight the active tab
+        document.querySelectorAll('.nav-list a').forEach(link => {
+            const targetId = link.getAttribute('href').substring(1);
+            link.classList.toggle('active', targetId === pageId);
+        });
+
+        // Ensure the Datasets tab highlights for dataset-related pages
+        const datasetPages = ['datasets-page', 'dataset-view', 'schema-page', 'generation-page'];
+        if (datasetPages.includes(pageId)) {
+            document.querySelectorAll('.nav-list a').forEach(link => link.classList.remove('active'));
+            document.getElementById('datasets-tab').classList.add('active');
+        }
+
+        // Handle the case when "Datasets" tab is clicked explicitly
+        if (pageId === 'datasets') {
+            showPage('datasets-page');
+        }
+    }
+
+    function openDatasetModal() {
+        document.getElementById('dataset-modal').style.display = 'flex';
+    }
+
+    function closeDatasetModal() {
+        document.getElementById('dataset-modal').style.display = 'none';
+    }
+
+    // Add event listener for form submission
+    document.getElementById('dataset-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        // Get form data
+        const name = document.getElementById('dataset-name').value;
+        const type = document.getElementById('dataset-type').value;
+        const rows = document.getElementById('dataset-rows').value;
+        const source = document.getElementById('dataset-source').value;
+
+        // Add new row to the datasets table
+        const table = document.getElementById('datasets-table').querySelector('tbody');
+        table.insertAdjacentHTML('beforeend', `
+            <tr>
+                <td>${name}</td>
+                <td>${type}</td>
+                <td>${rows}</td>
+                <td>${source}</td>
+            </tr>
+        `);
+
+        // Close the modal and reset the form
+        closeDatasetModal();
+        document.getElementById('dataset-form').reset();
+    });
+
+    // Add event listeners for sidebar navigation
+    document.querySelectorAll('.nav-list a').forEach(link => {
+        link.addEventListener('click', event => {
+            event.preventDefault();
+            const pageId = link.getAttribute('href').substring(1);
+            showPage(pageId);
+        });
+    });
+
+    // Ensure the default page is displayed on initial load
+    document.addEventListener('DOMContentLoaded', () => {
+        const defaultPage = 'datasets-page'; // Change this if you want a different default page
+        showPage(defaultPage);
+    });
+</script> -->
+<script>
+
+        function openKeyModal(keyName = '', keyValue = '') {
+                document.getElementById('key-modal').style.display = 'flex';
+                document.getElementById('key-name').value = keyName;
+                document.getElementById('key-value').value = keyValue;
+                document.getElementById('key-modal-title').textContent = keyName ? 'Edit Key' : 'Add Key';
+            }
+
+            function closeKeyModal() {
+                document.getElementById('key-modal').style.display = 'none';
+            }
+
+            function editKey(button) {
+                const row = button.closest('tr');
+                const keyName = row.children[0].textContent;
+                const keyValue = row.children[1].textContent;
+                openKeyModal(keyName, keyValue);
+            }
+
+            function deleteKey(button) {
+                const row = button.closest('tr');
+                row.remove();
+            }
+
+            document.getElementById('key-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const keyName = document.getElementById('key-name').value;
+                const keyValue = document.getElementById('key-value').value;
+
+                const tableBody = document.getElementById('keys-table').querySelector('tbody');
+                const existingRow = Array.from(tableBody.children).find(row => row.children[0].textContent === keyName);
+
+                if (existingRow) {
+                    // Edit existing key
+                    existingRow.children[1].textContent = keyValue;
+                } else {
+                    // Add new key
+                    tableBody.insertAdjacentHTML('beforeend',
+                        `<tr>
+                    <td>${keyName}</td>
+                    <td>${keyValue}</td>
+                    <td>
+                        <button class="button" onclick="editKey(this)">Edit</button>
+                        <button class="button" onclick="deleteKey(this)">Delete</button>
+                    </td>
+                </tr>`
+                    );
+                }
+
+                closeKeyModal();
+                document.getElementById('key-form').reset();
+            });
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        const page = document.getElementById(pageId);
+        if (page) page.classList.add('active');
+
+        document.querySelectorAll('.nav-list a').forEach(link => {
+            const targetId = link.getAttribute('href').substring(1);
+            link.classList.toggle('active', targetId === pageId);
+        });
+
+        const datasetPages = ['datasets-page', 'dataset-view', 'schema-page', 'generation-page'];
+        if (datasetPages.includes(pageId)) {
+            document.querySelectorAll('.nav-list a').forEach(link => link.classList.remove('active'));
+            document.getElementById('datasets-tab').classList.add('active');
+        }
+
+        if (pageId === 'datasets') {
+            showPage('datasets-page');
+        }
+
+            if (pageId === 'keys') {
+            showPage('keys-page'); // Link "Keys" tab to "keys-page"
+        }
+    }
+
+    function openDatasetModal() {
+        document.getElementById('dataset-modal').style.display = 'flex';
+    }
+
+    function closeDatasetModal() {
+        document.getElementById('dataset-modal').style.display = 'none';
+    }
+
+    function openSchemaModal(tableName = '', primaryKey = '', rows = '') {
+        document.getElementById('schema-modal').style.display = 'flex';
+        document.getElementById('schema-name').value = tableName;
+        document.getElementById('primary-key').value = primaryKey;
+        document.getElementById('rows').value = rows;
+    }
+
+    function closeSchemaModal() {
+        document.getElementById('schema-modal').style.display = 'none';
+    }
+
+    document.getElementById('dataset-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const name = document.getElementById('dataset-name').value;
+        const type = document.getElementById('dataset-type').value;
+        const rows = document.getElementById('dataset-rows').value;
+        const source = document.getElementById('dataset-source').value;
+
+        const table = document.getElementById('datasets-table').querySelector('tbody');
+        table.insertAdjacentHTML('beforeend', `
+            <tr>
+                <td>${name}</td>
+                <td>${type}</td>
+                <td>${rows}</td>
+                <td>${source}</td>
+            </tr>
+        `);
+
+        closeDatasetModal();
+        document.getElementById('dataset-form').reset();
+    });
+
+    document.getElementById('schema-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const tableName = document.getElementById('schema-name').value;
+        const primaryKey = document.getElementById('primary-key').value;
+        const rows = document.getElementById('rows').value;
+
+        const tableBody = document.getElementById('schema-table-body');
+        tableBody.insertAdjacentHTML('beforeend', `
+            <tr class="schema-row">
+                <td>${tableName}</td>
+                <td>${primaryKey}</td>
+                <td>${rows}</td>
+            </tr>
+        `);
+
+        closeSchemaModal();
+        document.getElementById('schema-form').reset();
+    });
+
+    document.querySelectorAll('.nav-list a').forEach(link => {
+        link.addEventListener('click', event => {
+            event.preventDefault();
+            const pageId = link.getAttribute('href').substring(1);
+            showPage(pageId);
+        });
+    });
+
+    // Add click event listener to schema rows
+    document.addEventListener('DOMContentLoaded', () => {
+        const schemaRows = document.querySelectorAll('.schema-row');
+        schemaRows.forEach(row => {
+            row.addEventListener('click', () => {
+                const tableName = row.children[0].textContent;
+                const primaryKey = row.children[1].textContent;
+                const rows = row.children[2].textContent;
+                openSchemaModal(tableName, primaryKey, rows);
+            });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+            const defaultPage = 'datasets-page'; // Default page on load
+            showPage(defaultPage);
+        });
+</script>
+
+</body>
+
+</html>
