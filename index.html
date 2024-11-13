@@ -615,6 +615,7 @@
             document.getElementById('key-form').addEventListener('submit', function (e) {
                 e.preventDefault();
                 const keyName = document.getElementById('key-name').value;
+                const keyProvider = document.getElementById('key-provider').value;
                 const keyValue = document.getElementById('key-value').value;
 
                 const tableBody = document.getElementById('keys-table').querySelector('tbody');
@@ -628,11 +629,8 @@
                     tableBody.insertAdjacentHTML('beforeend',
                         `<tr>
                     <td>${keyName}</td>
+                    <td>${keyProvider}</td>
                     <td>${keyValue}</td>
-                    <td>
-                        <button class="button" onclick="editKey(this)">Edit</button>
-                        <button class="button" onclick="deleteKey(this)">Delete</button>
-                    </td>
                 </tr>`
                     );
                 }
